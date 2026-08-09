@@ -66,9 +66,14 @@ class MeterBusSensor(MeterBusEntity, SensorEntity):
         super().__init__(coordinator, address, point.key)
         self._key = point.key
         sensor = point.sensor
+        # Names come from strings.json and icons from icons.json, both keyed on
+        # translation_key, so neither is hardcoded here and both are
+        # translatable. The tariff and billing-period numbers ride along as
+        # placeholders rather than being formatted into a name.
+        self._attr_translation_key = point.translation_key
+        self._attr_translation_placeholders = point.placeholders
         self.entity_description = SensorEntityDescription(
             key=point.key,
-            name=point.name,
             native_unit_of_measurement=sensor.unit,
             # Home Assistant's device and state classes are string enums whose
             # values are exactly what profiles.py stores, so this is a cast and
@@ -82,11 +87,6 @@ class MeterBusSensor(MeterBusEntity, SensorEntity):
             suggested_display_precision=sensor.precision,
             entity_category=EntityCategory.DIAGNOSTIC if sensor.diagnostic else None,
             entity_registry_enabled_default=sensor.enabled,
-            # Only set where it says something the device class does not — a
-            # thermal kWh against an electrical one, say. Overriding an icon
-            # that already matches the device class just makes this integration
-            # look different from every other one for no gain.
-            icon=sensor.icon,
         )
 
     @property

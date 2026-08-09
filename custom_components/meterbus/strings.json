@@ -61,5 +61,177 @@
         }
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "circuit_volume": {
+        "name": "Circuit volume"
+      },
+      "circuit_volume_tariff": {
+        "name": "Circuit volume tariff {tariff}"
+      },
+      "circuit_volume_previous": {
+        "name": "Circuit volume previous period {period}"
+      },
+      "circuit_volume_tariff_previous": {
+        "name": "Circuit volume tariff {tariff} previous period {period}"
+      },
+      "energy": {
+        "name": "Energy"
+      },
+      "energy_tariff": {
+        "name": "Energy tariff {tariff}"
+      },
+      "energy_previous": {
+        "name": "Energy previous period {period}"
+      },
+      "energy_tariff_previous": {
+        "name": "Energy tariff {tariff} previous period {period}"
+      },
+      "error_flags": {
+        "name": "Error flags"
+      },
+      "error_flags_tariff": {
+        "name": "Error flags tariff {tariff}"
+      },
+      "error_flags_previous": {
+        "name": "Error flags previous period {period}"
+      },
+      "error_flags_tariff_previous": {
+        "name": "Error flags tariff {tariff} previous period {period}"
+      },
+      "external_temperature": {
+        "name": "External temperature"
+      },
+      "external_temperature_tariff": {
+        "name": "External temperature tariff {tariff}"
+      },
+      "external_temperature_previous": {
+        "name": "External temperature previous period {period}"
+      },
+      "external_temperature_tariff_previous": {
+        "name": "External temperature tariff {tariff} previous period {period}"
+      },
+      "flow_temperature": {
+        "name": "Flow temperature"
+      },
+      "flow_temperature_tariff": {
+        "name": "Flow temperature tariff {tariff}"
+      },
+      "flow_temperature_previous": {
+        "name": "Flow temperature previous period {period}"
+      },
+      "flow_temperature_tariff_previous": {
+        "name": "Flow temperature tariff {tariff} previous period {period}"
+      },
+      "heat_energy": {
+        "name": "Heat energy"
+      },
+      "heat_energy_tariff": {
+        "name": "Heat energy tariff {tariff}"
+      },
+      "heat_energy_previous": {
+        "name": "Heat energy previous period {period}"
+      },
+      "heat_energy_tariff_previous": {
+        "name": "Heat energy tariff {tariff} previous period {period}"
+      },
+      "mass": {
+        "name": "Mass"
+      },
+      "mass_tariff": {
+        "name": "Mass tariff {tariff}"
+      },
+      "mass_previous": {
+        "name": "Mass previous period {period}"
+      },
+      "mass_tariff_previous": {
+        "name": "Mass tariff {tariff} previous period {period}"
+      },
+      "on_time": {
+        "name": "On time"
+      },
+      "on_time_tariff": {
+        "name": "On time tariff {tariff}"
+      },
+      "on_time_previous": {
+        "name": "On time previous period {period}"
+      },
+      "on_time_tariff_previous": {
+        "name": "On time tariff {tariff} previous period {period}"
+      },
+      "operating_time": {
+        "name": "Operating time"
+      },
+      "operating_time_tariff": {
+        "name": "Operating time tariff {tariff}"
+      },
+      "operating_time_previous": {
+        "name": "Operating time previous period {period}"
+      },
+      "operating_time_tariff_previous": {
+        "name": "Operating time tariff {tariff} previous period {period}"
+      },
+      "power": {
+        "name": "Power"
+      },
+      "power_tariff": {
+        "name": "Power tariff {tariff}"
+      },
+      "power_previous": {
+        "name": "Power previous period {period}"
+      },
+      "power_tariff_previous": {
+        "name": "Power tariff {tariff} previous period {period}"
+      },
+      "return_temperature": {
+        "name": "Return temperature"
+      },
+      "return_temperature_tariff": {
+        "name": "Return temperature tariff {tariff}"
+      },
+      "return_temperature_previous": {
+        "name": "Return temperature previous period {period}"
+      },
+      "return_temperature_tariff_previous": {
+        "name": "Return temperature tariff {tariff} previous period {period}"
+      },
+      "temperature_difference": {
+        "name": "Temperature difference"
+      },
+      "temperature_difference_tariff": {
+        "name": "Temperature difference tariff {tariff}"
+      },
+      "temperature_difference_previous": {
+        "name": "Temperature difference previous period {period}"
+      },
+      "temperature_difference_tariff_previous": {
+        "name": "Temperature difference tariff {tariff} previous period {period}"
+      },
+      "volume": {
+        "name": "Volume"
+      },
+      "volume_tariff": {
+        "name": "Volume tariff {tariff}"
+      },
+      "volume_previous": {
+        "name": "Volume previous period {period}"
+      },
+      "volume_tariff_previous": {
+        "name": "Volume tariff {tariff} previous period {period}"
+      },
+      "volume_flow": {
+        "name": "Flow"
+      },
+      "volume_flow_tariff": {
+        "name": "Flow tariff {tariff}"
+      },
+      "volume_flow_previous": {
+        "name": "Flow previous period {period}"
+      },
+      "volume_flow_tariff_previous": {
+        "name": "Flow tariff {tariff} previous period {period}"
+      }
+    }
   }
 }

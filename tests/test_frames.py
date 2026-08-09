@@ -135,13 +135,19 @@ def test_heat_meter_volume_is_not_water_consumption():
 
 
 def test_thermal_energy_is_distinguishable_from_electrical():
-    """Both are device_class energy in kWh, so only the icon separates them."""
+    """Both are device_class energy in kWh, so the translation key separates them.
+
+    Not an icon set in code: icon translations are static per translation key,
+    so thermal energy needs its own key to carry a flame — which also gets it
+    the better name.
+    """
     heat = _keys(api.parse_frame(LSE_HEAT))["energy"]
     electric = _keys(api.parse_frame(SIE_ELECTRICITY))["energy"]
     assert heat.sensor.device_class == electric.sensor.device_class == "energy"
-    assert heat.sensor.icon == "mdi:fire", heat.sensor.icon
-    # The electricity meter keeps the device class's own icon.
-    assert electric.sensor.icon is None, electric.sensor.icon
+    assert heat.translation_key == "heat_energy", heat.translation_key
+    assert electric.translation_key == "energy", electric.translation_key
+    # The unique_id half must not move, or existing entities lose their history.
+    assert heat.key == electric.key == "energy"
 
 
 def test_lse_heat():
@@ -186,7 +192,8 @@ def test_sie_electricity_tariffs():
     assert _close(points["energy"].value, 10600.02), points["energy"].value
     assert _close(points["energy_t1"].value, 10600.02)
     assert _close(points["energy_t2"].value, 0.0)
-    assert points["energy_t1"].name == "Energy tariff 1"
+    assert points["energy_t1"].translation_key == "energy_tariff"
+    assert points["energy_t1"].placeholders == {"tariff": "1"}
 
 
 def test_error_flags_are_diagnostic_and_off_by_default():
@@ -394,6 +401,41 @@ def test_transactions_do_not_interleave():
     for t in threads:
         t.join()
     assert overlaps == [], overlaps
+
+
+def test_every_entity_name_and_icon_is_translated():
+    """Every name an entity can ask for must exist, with matching placeholders.
+
+    Names and icons are looked up by translation key at runtime, so a row added
+    to the profile table without its strings.json entry produces an entity with
+    no name and an error in the log — and a placeholder the translation does
+    not use (or vice versa) fails when Home Assistant formats it. Neither shows
+    up until that particular meter is on someone's bus, which is exactly the
+    kind of bug that ships.
+    """
+    import json
+    import re
+
+    names = json.loads((_PKG / "strings.json").read_text())["entity"]["sensor"]
+    icons = json.loads((_PKG / "icons.json").read_text())["entity"]["sensor"]
+
+    required = set()
+    for sensor in profiles.SENSORS.values():
+        # Both as-is and as a heat meter would present it.
+        for variant in (sensor, profiles._for_medium(sensor, 0x04)):
+            for storage, tariff in ((0, None), (0, 1), (1, None), (1, 1)):
+                _, key, placeholders, _ = profiles._decorate(variant, storage, tariff)
+                required.add((key, tuple(sorted(placeholders))))
+
+    missing = {key for key, _ in required} - set(names)
+    assert not missing, f"no name in strings.json for: {sorted(missing)}"
+
+    for key, placeholders in sorted(required):
+        used = tuple(sorted(set(re.findall(r"{(\w+)}", names[key]["name"]))))
+        assert used == placeholders, f"{key}: name uses {used}, entity gives {placeholders}"
+
+    stray = set(icons) - set(names)
+    assert not stray, f"icons.json names keys that do not exist: {sorted(stray)}"
 
 
 def test_address_list_parsing():

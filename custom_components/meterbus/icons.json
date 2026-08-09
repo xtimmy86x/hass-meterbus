@@ -1,0 +1,42 @@
+{
+  "entity": {
+    "sensor": {
+      "circuit_volume": {
+        "default": "mdi:pipe"
+      },
+      "circuit_volume_tariff": {
+        "default": "mdi:pipe"
+      },
+      "circuit_volume_previous": {
+        "default": "mdi:pipe"
+      },
+      "circuit_volume_tariff_previous": {
+        "default": "mdi:pipe"
+      },
+      "error_flags": {
+        "default": "mdi:alert"
+      },
+      "error_flags_tariff": {
+        "default": "mdi:alert"
+      },
+      "error_flags_previous": {
+        "default": "mdi:alert"
+      },
+      "error_flags_tariff_previous": {
+        "default": "mdi:alert"
+      },
+      "heat_energy": {
+        "default": "mdi:fire"
+      },
+      "heat_energy_tariff": {
+        "default": "mdi:fire"
+      },
+      "heat_energy_previous": {
+        "default": "mdi:fire"
+      },
+      "heat_energy_tariff_previous": {
+        "default": "mdi:fire"
+      }
+    }
+  }
+}

@@ -46,7 +46,6 @@ class Sensor:
     """How one kind of record is presented in Home Assistant."""
 
     key: str
-    name: str
     unit: str | None = None
     device_class: str | None = None
     state_class: str | None = None
@@ -54,7 +53,17 @@ class Sensor:
     precision: int | None = None
     diagnostic: bool = False
     enabled: bool = True
-    icon: str | None = None
+    # Names and icons both come from translations, keyed on this. It is a
+    # separate field from ``key`` because ``key`` is half of the entity's
+    # unique_id and must never move: a calorimeter's energy is presented as
+    # "Heat energy" with its own icon, but it is still `<address>_energy` in
+    # the registry, so existing entities keep their history.
+    translation_key: str = ""
+
+    def __post_init__(self) -> None:
+        """Default the translation key to the entity key."""
+        if not self.translation_key:
+            object.__setattr__(self, "translation_key", self.key)
 
 
 # Media whose volume is a circulating loop rather than something consumed:
@@ -68,7 +77,6 @@ _CIRCULATING_MEDIA = frozenset({0x04, 0x0A, 0x0B, 0x0C, 0x0D})
 SENSORS: dict[tuple[str, str], Sensor] = {
     ("VIFUnit.ENERGY_WH", "MeasureUnit.WH"): Sensor(
         key="energy",
-        name="Energy",
         unit="kWh",
         device_class="energy",
         state_class="total_increasing",
@@ -77,7 +85,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.ENERGY_J", "MeasureUnit.J"): Sensor(
         key="energy",
-        name="Energy",
         unit="kWh",
         device_class="energy",
         state_class="total_increasing",
@@ -86,7 +93,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.VOLUME", "MeasureUnit.M3"): Sensor(
         key="volume",
-        name="Volume",
         unit="m³",
         device_class="water",
         state_class="total_increasing",
@@ -94,7 +100,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.VOLUME_FLOW", "MeasureUnit.M3_H"): Sensor(
         key="volume_flow",
-        name="Flow",
         unit="m³/h",
         device_class="volume_flow_rate",
         state_class="measurement",
@@ -102,7 +107,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.POWER_W", "MeasureUnit.W"): Sensor(
         key="power",
-        name="Power",
         unit="W",
         device_class="power",
         state_class="measurement",
@@ -110,7 +114,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.FLOW_TEMPERATURE", "MeasureUnit.C"): Sensor(
         key="flow_temperature",
-        name="Flow temperature",
         unit="°C",
         device_class="temperature",
         state_class="measurement",
@@ -118,7 +121,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.RETURN_TEMPERATURE", "MeasureUnit.C"): Sensor(
         key="return_temperature",
-        name="Return temperature",
         unit="°C",
         device_class="temperature",
         state_class="measurement",
@@ -126,7 +128,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.EXTERNAL_TEMPERATURE", "MeasureUnit.C"): Sensor(
         key="external_temperature",
-        name="External temperature",
         unit="°C",
         device_class="temperature",
         state_class="measurement",
@@ -134,7 +135,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.TEMPERATURE_DIFFERENCE", "MeasureUnit.K"): Sensor(
         key="temperature_difference",
-        name="Temperature difference",
         unit="K",
         device_class="temperature",
         state_class="measurement",
@@ -142,7 +142,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.MASS", "MeasureUnit.KG"): Sensor(
         key="mass",
-        name="Mass",
         unit="kg",
         device_class="weight",
         state_class="total_increasing",
@@ -153,7 +152,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     # meter's "days" or "hours" to seconds, which is what DURATION wants.
     ("VIFUnit.OPERATING_TIME", "MeasureUnit.SECONDS"): Sensor(
         key="operating_time",
-        name="Operating time",
         unit="s",
         device_class="duration",
         state_class="total_increasing",
@@ -162,7 +160,6 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     ),
     ("VIFUnit.ON_TIME", "MeasureUnit.SECONDS"): Sensor(
         key="on_time",
-        name="On time",
         unit="s",
         device_class="duration",
         state_class="total_increasing",
@@ -173,12 +170,8 @@ SENSORS: dict[tuple[str, str], Sensor] = {
     # meter misbehaves, meaningless the rest of the time, so it ships disabled.
     ("VIFUnitExt.ERROR_FLAGS", "MeasureUnit.NONE"): Sensor(
         key="error_flags",
-        name="Error flags",
         diagnostic=True,
         enabled=False,
-        # No device class to draw an icon from, and "0" with no icon reads as
-        # nothing at all.
-        icon="mdi:alert",
     ),
 }
 
@@ -188,7 +181,8 @@ class SensorPoint:
     """One record matched to its presentation, ready to become an entity."""
 
     key: str
-    name: str
+    translation_key: str
+    placeholders: dict[str, str]
     sensor: Sensor
     value: float | None
 
@@ -203,26 +197,34 @@ class SensorPoint:
         return self.sensor.enabled
 
 
-def _decorate(sensor: Sensor, storage: int, tariff: int | None) -> tuple[str, str, bool]:
-    """Return the (key, name, enabled) for one record's storage/tariff variant.
+def _decorate(
+    sensor: Sensor, storage: int, tariff: int | None
+) -> tuple[str, str, dict[str, str], bool]:
+    """Return (key, translation_key, placeholders, enabled) for one variant.
 
     Storage and tariff are not separate kinds of sensor, they are qualifiers on
     the same one — which is why they decorate a row rather than needing rows of
     their own. Nine Siemens energy registers collapse to one table entry.
+
+    The numbers travel as translation placeholders rather than being formatted
+    into a name here, so "Energy tariff {tariff}" stays translatable.
     """
-    key, name, enabled = sensor.key, sensor.name, sensor.enabled
+    key, translation_key, enabled = sensor.key, sensor.translation_key, sensor.enabled
+    placeholders: dict[str, str] = {}
     if tariff:
         key = f"{key}_t{tariff}"
-        name = f"{name} tariff {tariff}"
+        translation_key = f"{translation_key}_tariff"
+        placeholders["tariff"] = str(tariff)
     if storage:
         # Storage > 0 is a billing-date snapshot the meter froze, not a live
         # counter: it steps *backwards* every billing period, which would make
         # a TOTAL_INCREASING sensor report a huge phantom delta to the energy
         # dashboard. Ship it without a state class, and disabled.
         key = f"{key}_prev{storage}"
-        name = f"{name} previous period {storage}" if storage > 1 else f"{name} previous period"
+        translation_key = f"{translation_key}_previous"
+        placeholders["period"] = str(storage)
         enabled = False
-    return key, name, enabled
+    return key, translation_key, placeholders, enabled
 
 
 def sensors_for(reading: MeterReading) -> list[SensorPoint]:
@@ -260,12 +262,20 @@ def _point_for(record: Record, medium: int) -> SensorPoint | None:
     value = _numeric(record.value)
     if value is None:
         return None
-    key, name, enabled = _decorate(sensor, record.storage, record.tariff)
+    key, translation_key, placeholders, enabled = _decorate(
+        sensor, record.storage, record.tariff
+    )
     if record.storage:
         sensor = replace(sensor, enabled=enabled, state_class=None)
     elif enabled != sensor.enabled:
         sensor = replace(sensor, enabled=enabled)
-    return SensorPoint(key=key, name=name, sensor=sensor, value=value * sensor.scale)
+    return SensorPoint(
+        key=key,
+        translation_key=translation_key,
+        placeholders=placeholders,
+        sensor=sensor,
+        value=value * sensor.scale,
+    )
 
 
 def _for_medium(sensor: Sensor, medium: int) -> Sensor:
@@ -280,15 +290,23 @@ def _for_medium(sensor: Sensor, medium: int) -> Sensor:
     ``landisgyr_heat_meter`` models the same figure as VOLUME, which is a
     quantity rather than a consumption, and that is the right call.
 
-    Energy has the mirror problem: thermal and electrical kWh are both
-    ``device_class: energy`` and draw the same icon, so in a list of forty-odd
-    meters there is nothing to tell a calorimeter from an electricity meter.
-    An icon is the cheapest thing that does.
+    Energy has the mirror problem and no correctness fix: thermal and electrical
+    kWh are both ``device_class: energy`` and draw the same icon, so in a list
+    of forty-odd meters nothing tells a calorimeter from an electricity meter.
+
+    Both take their own translation key rather than an icon set in code. Icon
+    translations are static per key, so a key shared with electrical energy
+    could never carry a flame — and the separate key earns its keep twice,
+    because "Heat energy" also reads better than a second entity called
+    "Energy". The entity ``key``, and so its unique_id, is untouched, so
+    existing entities keep their history.
     """
-    if sensor.key == "volume" and medium in _CIRCULATING_MEDIA:
-        return replace(sensor, device_class="volume", icon="mdi:pipe")
-    if sensor.key == "energy" and medium in _CIRCULATING_MEDIA:
-        return replace(sensor, icon="mdi:fire")
+    if medium not in _CIRCULATING_MEDIA:
+        return sensor
+    if sensor.key == "volume":
+        return replace(sensor, device_class="volume", translation_key="circuit_volume")
+    if sensor.key == "energy":
+        return replace(sensor, translation_key="heat_energy")
     return sensor
 
 

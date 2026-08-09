@@ -117,6 +117,33 @@ def test_apa_snapshot_is_not_a_counter():
     assert snapshot.enabled is False
 
 
+def test_heat_meter_volume_is_not_water_consumption():
+    """A calorimeter's m³ is a circulating loop, not water anyone used.
+
+    Presented as device_class WATER it becomes eligible for the Energy
+    dashboard's Water section, where it would inflate household water use by
+    the whole heating circulation. Home Assistant's own landisgyr_heat_meter
+    models the same figure as VOLUME.
+    """
+    heat = _keys(api.parse_frame(LSE_HEAT))["volume"]
+    water = _keys(api.parse_frame(APA_WATER))["volume"]
+    assert heat.sensor.device_class == "volume", heat.sensor.device_class
+    assert water.sensor.device_class == "water", water.sensor.device_class
+    # Both are still cumulative counters, and both still read in m³.
+    assert heat.sensor.state_class == water.sensor.state_class == "total_increasing"
+    assert heat.sensor.unit == water.sensor.unit == "m³"
+
+
+def test_thermal_energy_is_distinguishable_from_electrical():
+    """Both are device_class energy in kWh, so only the icon separates them."""
+    heat = _keys(api.parse_frame(LSE_HEAT))["energy"]
+    electric = _keys(api.parse_frame(SIE_ELECTRICITY))["energy"]
+    assert heat.sensor.device_class == electric.sensor.device_class == "energy"
+    assert heat.sensor.icon == "mdi:fire", heat.sensor.icon
+    # The electricity meter keeps the device class's own icon.
+    assert electric.sensor.icon is None, electric.sensor.icon
+
+
 def test_lse_heat():
     """A heat meter decodes to energy in kWh plus volume and runtime."""
     reading = api.parse_frame(LSE_HEAT)

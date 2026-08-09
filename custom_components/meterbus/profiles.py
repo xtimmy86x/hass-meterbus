@@ -54,6 +54,12 @@ class Sensor:
     precision: int | None = None
     diagnostic: bool = False
     enabled: bool = True
+    icon: str | None = None
+
+
+# Media whose volume is a circulating loop rather than something consumed:
+# heat (in and out), cooling load, and combined heat/cooling meters.
+_CIRCULATING_MEDIA = frozenset({0x04, 0x0A, 0x0B, 0x0C, 0x0D})
 
 
 # Keyed on (VIF unit, measure unit) as pyMeterBus names them. Both halves are
@@ -170,6 +176,9 @@ SENSORS: dict[tuple[str, str], Sensor] = {
         name="Error flags",
         diagnostic=True,
         enabled=False,
+        # No device class to draw an icon from, and "0" with no icon reads as
+        # nothing at all.
+        icon="mdi:alert",
     ),
 }
 
@@ -221,7 +230,7 @@ def sensors_for(reading: MeterReading) -> list[SensorPoint]:
     points: list[SensorPoint] = []
     seen: set[str] = set()
     for record in reading.records:
-        point = _point_for(record)
+        point = _point_for(record, reading.medium)
         if point is None or point.key in seen:
             # A meter repeating the same (record, storage, tariff) triple would
             # otherwise collide on unique_id and lose one of the two silently.
@@ -240,13 +249,14 @@ def values_for(reading: MeterReading) -> dict[str, float]:
     }
 
 
-def _point_for(record: Record) -> SensorPoint | None:
+def _point_for(record: Record, medium: int) -> SensorPoint | None:
     """Match one record to its presentation, or None if it is not exposed."""
     if record.function != FUNCTION_INSTANTANEOUS:
         return None
     sensor = SENSORS.get((record.vif, record.unit))
     if sensor is None:
         return None
+    sensor = _for_medium(sensor, medium)
     value = _numeric(record.value)
     if value is None:
         return None
@@ -256,6 +266,30 @@ def _point_for(record: Record) -> SensorPoint | None:
     elif enabled != sensor.enabled:
         sensor = replace(sensor, enabled=enabled)
     return SensorPoint(key=key, name=name, sensor=sensor, value=value * sensor.scale)
+
+
+def _for_medium(sensor: Sensor, medium: int) -> Sensor:
+    """Adjust a row for what the meter actually measures.
+
+    The record says "volume in m³" whether the meter is a water meter or a heat
+    meter, but they do not mean the same thing. Water through a water meter is
+    consumed and gone; water through a calorimeter is a heating loop going
+    round, and it comes back. Presented as ``device_class: water`` the latter
+    becomes eligible for the Energy dashboard's Water section, where it would
+    inflate household water use by the entire circulation. Home Assistant's own
+    ``landisgyr_heat_meter`` models the same figure as VOLUME, which is a
+    quantity rather than a consumption, and that is the right call.
+
+    Energy has the mirror problem: thermal and electrical kWh are both
+    ``device_class: energy`` and draw the same icon, so in a list of forty-odd
+    meters there is nothing to tell a calorimeter from an electricity meter.
+    An icon is the cheapest thing that does.
+    """
+    if sensor.key == "volume" and medium in _CIRCULATING_MEDIA:
+        return replace(sensor, device_class="volume", icon="mdi:pipe")
+    if sensor.key == "energy" and medium in _CIRCULATING_MEDIA:
+        return replace(sensor, icon="mdi:fire")
+    return sensor
 
 
 def _numeric(value: object) -> float | None:

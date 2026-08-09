@@ -159,7 +159,8 @@ identified by its 16-digit secondary address.
 | Record | Entity | Class |
 |---|---|---|
 | Energy (Wh / J) | `kWh` | `energy` / `total_increasing` |
-| Volume | `m³` | `water` / `total_increasing` |
+| Volume, water meter | `m³` | `water` / `total_increasing` |
+| Volume, heat/cooling meter | `m³` | `volume` / `total_increasing` |
 | Volume flow | `m³/h` | `volume_flow_rate` / `measurement` |
 | Power | `W` | `power` / `measurement` |
 | Flow / return / external temperature | `°C` | `temperature` / `measurement` |
@@ -171,6 +172,32 @@ identified by its 16-digit secondary address.
 Energy and volume are scaled to Home Assistant's base units — the wire carries
 "100 Wh" and "milli-m³", nobody wants those on a dashboard — so the sensors
 drop straight into the Energy dashboard as water and energy sources.
+
+### Getting a useful view of it
+
+Forty meters is a wall of devices and entities on the integration page, and no
+amount of integration-side polish changes that — Home Assistant has no "meter"
+entity domain to make them into something prettier. There are 45 entity
+platforms and none of them is one; a meter has no behaviour to model, only a
+number that goes up, so `sensor` plus a device class *is* the model.
+
+What plays the role you are looking for is the **Energy dashboard**
+(Settings → Dashboards → Energy). That is Home Assistant's meter-shaped UI —
+consumption per period, comparison, cost — and these sensors are built for it:
+
+| Meter | Where it goes |
+|---|---|
+| Water meters | **Water** section, directly |
+| Electricity meters | **Grid consumption**, or *Individual devices* per flat |
+| Calorimeters (kWh) | No thermal section exists. The [heat meter docs](https://www.home-assistant.io/integrations/landisgyr_heat_meter/) suggest adding heat as **Gas**, which the dashboard converts to kWh; [this discussion](https://github.com/orgs/home-assistant/discussions/2917) tracks native support |
+
+For per-month or per-tariff figures, layer the core
+[`utility_meter`](https://www.home-assistant.io/integrations/utility_meter/)
+helper on any of these sensors — it does cycles and tariffs, so this
+integration does not need to.
+
+Then assign meters to **areas** (by flat or riser) and the device list stops
+being one flat wall.
 
 ### What is deliberately not exposed
 

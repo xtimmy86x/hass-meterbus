@@ -82,6 +82,11 @@ class MeterBusSensor(MeterBusEntity, SensorEntity):
             suggested_display_precision=sensor.precision,
             entity_category=EntityCategory.DIAGNOSTIC if sensor.diagnostic else None,
             entity_registry_enabled_default=sensor.enabled,
+            # Only set where it says something the device class does not — a
+            # thermal kWh against an electrical one, say. Overriding an icon
+            # that already matches the device class just makes this integration
+            # look different from every other one for no gain.
+            icon=sensor.icon,
         )
 
     @property

@@ -1,0 +1,17 @@
+{
+  "domain": "meterbus",
+  "name": "Meter-Bus",
+  "codeowners": [
+    "@rpodgorny"
+  ],
+  "config_flow": true,
+  "documentation": "https://github.com/rpodgorny/hass-meterbus",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/rpodgorny/hass-meterbus/issues",
+  "requirements": [
+    "pyMeterBus==0.8.4",
+    "pyserial>=3.5"
+  ],
+  "version": "0.3.0"
+}

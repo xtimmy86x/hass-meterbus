@@ -1,0 +1,65 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add an M-Bus",
+        "description": "How is the M-Bus master connected to Home Assistant?",
+        "menu_options": {
+          "serial": "Serial port on this machine",
+          "tcp": "Network (a serial-to-TCP bridge)"
+        }
+      },
+      "serial": {
+        "title": "M-Bus on a serial port",
+        "description": "Path of the USB or RS232 M-Bus level converter wired to the bus.\n\nHome Assistant must be able to open the port, and nothing else may hold it open — stop any other M-Bus tool first, the bus allows one master at a time.",
+        "data": {
+          "serial_port": "Serial port",
+          "baud": "Baud rate"
+        },
+        "data_description": {
+          "baud": "Almost every wired M-Bus meter runs at 2400 baud. The framing is always 8E1; even parity is not optional, and a meter will not answer at all without it."
+        }
+      },
+      "tcp": {
+        "title": "M-Bus over a TCP bridge",
+        "description": "Address of a raw serial-to-TCP bridge in front of the M-Bus master — ser2net, socat, or a hardware serial-to-WiFi gateway.\n\nThe bridge must pass bytes through untouched and must be configured for 8E1 at the meters' baud rate; that setting lives on the bridge, not here. Only one master can use the bus at a time.",
+        "data": {
+          "host": "Host",
+          "port": "Port"
+        }
+      },
+      "meters": {
+        "title": "Meters found",
+        "description": "The scan found **{count}** meters. {scan_note}\n\nCheck the list before saving. You can edit it — one 16-digit secondary address per line — to add a meter the scan did not reach, or to remove one you do not want polled.",
+        "data": {
+          "meters": "Meter addresses"
+        }
+      }
+    },
+    "progress": {
+      "scanning": "Searching the bus for meters — **{found} found so far**, now trying addresses starting `{prefix}`.\n\nThis is a wildcard address search and it is slow: expect several minutes for a few dozen meters at 2400 baud. There is no percentage because there is no honest one — how long a prefix takes depends on how many meters hide under it, which is what the search is working out.\n\nIt only runs when you add or reconfigure the bus, never on a restart."
+    },
+    "error": {
+      "cannot_connect": "Nothing answered on the bus. Check the port or bridge address, that the framing is 8E1 at the right baud rate, that the M-Bus master has power, and that no other tool is holding the port.",
+      "bad_address": "An M-Bus secondary address is exactly 16 hexadecimal digits, for example 0014280901060307. Put one per line.",
+      "no_meters": "Enter at least one meter address."
+    },
+    "abort": {
+      "already_configured": "This M-Bus is already configured.",
+      "reconfigure_successful": "Meter list updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "M-Bus options",
+        "data": {
+          "scan_interval": "Poll interval (seconds)"
+        },
+        "data_description": {
+          "scan_interval": "One sweep costs roughly 0.7 seconds of bus time per meter at 2400 baud — about 30 seconds for 41 meters — and the bus is half-duplex, so reads cannot overlap. These are cumulative counters that move in hours, so there is little to gain from polling harder."
+        }
+      }
+    }
+  }
+}

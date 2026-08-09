@@ -1,3 +1,5 @@
+<img src="custom_components/meterbus/brand/icon.png" width="96" align="right" alt="M-Bus">
+
 # Meter-Bus — Home Assistant integration
 
 [![HACS: custom](https://img.shields.io/badge/HACS-custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
@@ -271,7 +273,19 @@ is what makes dropping those registers possible at all.
 
 ## Licence
 
-GPL-3.0 — see [LICENSE](LICENSE).
+The integration — client, coordinator, config flow, profile table and the
+sensor platform — is original work in this repository, licensed under
+**GPL-3.0** (see [LICENSE](LICENSE)).
 
-"M-Bus" and "Meter-Bus" refer to the EN 13757 standard. This project is not
-affiliated with, endorsed by or supported by any meter manufacturer.
+The artwork in `custom_components/meterbus/brand/` is **not**. It is the M-Bus
+mark, owned by the M-Bus Usergroup and used descriptively to identify the
+protocol this integration speaks, under the terms set out in
+[`brand/ATTRIBUTION.md`](custom_components/meterbus/brand/ATTRIBUTION.md). Since
+[Home Assistant 2026.3](https://developers.home-assistant.io/blog/2026/02/24/brands-proxy-api/)
+these assets are served straight from the integration through HA's brands proxy,
+so no submission to [home-assistant/brands](https://github.com/home-assistant/brands)
+is needed.
+
+"M-Bus" and "Meter-Bus" refer to the EN 13757 standard; the M-Bus mark is the
+property of the M-Bus Usergroup. This project is not affiliated with, endorsed
+by or supported by the M-Bus Usergroup or any meter manufacturer.
